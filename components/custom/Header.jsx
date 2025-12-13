@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { Button } from '../ui/button'
 function Header(){
     return(
-        <div className='flex justify-between items-center'><Image src="/logo.jpg" alt="logo" width={50} height={40} />
+        <div className='flex px-2 justify-between items-center'><Image src="/logo.jpg" alt="logo" width={50} height={40} />
             <div className="flex gap-5">
                 <Button variant="ghost">Sign In</Button>
                 <Button>Get Started</Button>
