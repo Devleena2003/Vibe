@@ -1,13 +1,28 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ThemeProvider as NextThemeProvider } from 'next-themes'
 import Header from '@/components/custom/Header'
 import { UserDetailContext } from '@/context/UserDetailContext'
 import {MessageContext} from '@/context/MessageContext'
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import { useConvex } from 'convex/react'
+import { api } from '@/convex/_generated/api'
 function Provider({ children }) {
     const [messages, setMessages] = useState()
-    const [userDetail,setUserDetail]=useState()
+    const [userDetail, setUserDetail] = useState()
+    const convex = useConvex();
+
+    useEffect(() => {
+      IsAutheticated()  
+    },[])
+    const IsAutheticated =  async() => {
+        if(typeof window !== undefined){
+            const user=JSON.parse(localStorage.getItem('user'))
+            const result = await convex.query(api.users.GetUser, { email: user?.email })
+            console.log(result)
+            setUserDetail(result)
+        }
+    }
     return (
        
         <div>

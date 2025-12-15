@@ -5,20 +5,33 @@ import { ArrowRight, Link } from 'lucide-react'
 import {MessageContext} from '@/context/MessageContext'
 import { UserDetailContext } from '@/context/UserDetailContext'
 import SignInDialog from './SignInDialog'
+import { useMutation } from 'convex/react'
+import { api } from '@/convex/_generated/api'
+import { useRouter } from 'next/navigation'
 function Hero(){
     const [input, setInput] = useState()
     const { messages, setMessages } = useContext(MessageContext)
     const { userDetail, setUserDetail } = useContext(UserDetailContext)
-    const [openDialog,setOpenDialog]=useState(false)
-    const onGenerate = (i) => {
+    const [openDialog, setOpenDialog] = useState(false)
+    const CreateWorkspace = useMutation(api.workspace.CreateWorkspace)
+    const router=useRouter()
+    const onGenerate = async(i) => {
         if (!userDetail?.name) {
             setOpenDialog(true);
             return;
         }
-        setMessages({
+        const msg = {
             role: 'user',
             content:i
-      })  
+        }
+        setMessages(msg)  
+        const workspaceId = await CreateWorkspace({
+               user:userDetail._id,
+            messages: [msg],
+         
+        })
+        console.log(workspaceId)
+        router.push('/workspace/'+workspaceId)
     }
     return(
         <div className='flex flex-col items-center mt-36 xl:mt-42 gap-2'><h2 className='font-bold text-4xl'>{Lookup.HERO_HEADING}</h2>
