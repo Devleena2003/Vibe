@@ -121,3 +121,15 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide scrollbar but keep scroll */
+.hide-scrollbar {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* IE 10+ */
+    scroll-behavior: smooth;
+
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;              /* Chrome, Safari, Edge */
+}
