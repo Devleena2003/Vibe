@@ -15,7 +15,7 @@ function CodeView() {
   const [activeTab, setActiveTab] = useState("code");
   const [files, setFiles] = useState(Lookup?.DEFAULT_FILE);
   const { messages, setMessages } = useContext(MessageContext);
-
+  const [dependencies, setDependencies] = useState({});
   useEffect(() => {
     if (messages?.length > 0) {
       const role = messages[messages?.length - 1].role;
@@ -32,8 +32,15 @@ function CodeView() {
     });
     console.log(result.data);
     const aiResp = result.data;
+    console.log(
+      "PACKAGE.JSON",
+      JSON.stringify(aiResp.files["/package.json"], null, 2)
+    );
     const mergedFiles = { ...Lookup.DEFAULT_FILE, ...aiResp?.files };
     setFiles(mergedFiles);
+    if (aiResp.dependencies) {
+      setDependencies(aiResp.dependencies);
+    }
   };
   return (
     <div>
@@ -60,6 +67,7 @@ function CodeView() {
         customSetup={{
           dependencies: {
             ...Lookup.DEPENDENCY,
+            ...dependencies,
           },
         }}
         options={{
