@@ -11,11 +11,33 @@ import Lookup from "@/data/Lookup";
 import { MessageContext } from "@/context/MessageContext";
 import axios from "axios";
 import Prompt from "../../data/Prompt";
+import { useParams } from "next/navigation";
+import { useConvex, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+
 function CodeView() {
+  const { id } = useParams(); // workspaceId
+  const convex = useConvex();
+
   const [activeTab, setActiveTab] = useState("code");
   const [files, setFiles] = useState(Lookup?.DEFAULT_FILE);
   const { messages, setMessages } = useContext(MessageContext);
   const [dependencies, setDependencies] = useState({});
+  const updateFiles = useMutation(api.workspace.UpdateFiles);
+  useEffect(() => {
+    id && GetWorkspaceFiles();
+  }, [id]);
+
+  const GetWorkspaceFiles = async () => {
+    const result = await convex.query(api.workspace.GetWorkspace, {
+      workspaceId: id,
+    });
+
+    if (result?.fileData) {
+      setFiles(result.fileData);
+    }
+  };
+
   useEffect(() => {
     if (messages?.length > 0) {
       const role = messages[messages?.length - 1].role;
@@ -32,16 +54,75 @@ function CodeView() {
     });
     console.log(result.data);
     const aiResp = result.data;
-    console.log(
-      "PACKAGE.JSON",
-      JSON.stringify(aiResp.files["/package.json"], null, 2)
-    );
+
     const mergedFiles = { ...Lookup.DEFAULT_FILE, ...aiResp?.files };
+
     setFiles(mergedFiles);
+    await updateFiles({
+      workspaceId: id, // you must already have this
+      files: mergedFiles,
+    });
+
     if (aiResp.dependencies) {
       setDependencies(aiResp.dependencies);
     }
   };
+  const [deploying, setDeploying] = useState(false);
+
+  const handleDeploy = async () => {
+    if (deploying) return;
+
+    try {
+      setDeploying(true);
+
+      const res = await axios.post("/api/deploy", {
+        files,
+        repoName: `ai-project-${Date.now()}`,
+      });
+
+      alert("🚀 Deployed successfully!");
+      console.log(res.data);
+      const { liveUrl } = res.data;
+
+      if (liveUrl) {
+        // 🚀 Redirect to live site
+        window.open(liveUrl, "_blank");
+      } else {
+        alert("Deployment succeeded but no live URL returned.");
+      }
+    } catch (err) {
+      console.error(err?.response?.data || err.message);
+      alert("Deployment failed");
+    } finally {
+      setDeploying(false);
+    }
+  };
+  const handleExport = async () => {
+    try {
+      const response = await axios.post(
+        "/api/export",
+        { files },
+        { responseType: "blob" }
+      );
+
+      const blob = new Blob([response.data], {
+        type: "application/zip",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "project.zip";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Failed to export project");
+    }
+  };
+
   return (
     <div>
       <div className="bg-[#181818] w-full p-2 border">
@@ -59,7 +140,20 @@ function CodeView() {
             Preview
           </h2>
         </div>
+        <button
+          onClick={handleDeploy}
+          className="bg-blue-500 text-white p-2 rounded"
+        >
+          Deploy
+        </button>
+        <button
+          onClick={handleExport}
+          className="bg-green-500 text-white p-2 rounded"
+        >
+          Export
+        </button>
       </div>
+
       <SandpackProvider
         files={files}
         template="react"

@@ -13,6 +13,7 @@ import { ArrowRight, Link, Loader2Icon } from "lucide-react";
 import axios from "axios";
 import Prompt from "@/data/Prompt";
 import { useMutation } from "convex/react";
+import { useSidebar } from "../ui/sidebar";
 function ChatView() {
   const { id } = useParams();
   const convex = useConvex();
@@ -21,6 +22,7 @@ function ChatView() {
   const [input, setUserInput] = useState();
   const [loading, setLoading] = useState(false);
   const UpdateMessages = useMutation(api.workspace.UpdateMessages);
+  const { toggleSidebar } = useSidebar();
   useEffect(() => {
     id && GetWorkspaceData();
   }, [id]);
@@ -72,7 +74,7 @@ function ChatView() {
   };
   return (
     <div className="relative h-[85vh] flex flex-col">
-      <div className="flex-1 overflow-y-scroll hide-scrollbar">
+      <div className="flex-1 overflow-y-scroll hide-scrollbar pl-5">
         {messages?.map((msg, index) => (
           <div
             className="p-3 rounded-lg mb-2 flex gap-2 items-center leading-7"
@@ -85,7 +87,7 @@ function ChatView() {
                 alt="userImage"
                 width={35}
                 height={35}
-                className="rounded-full"
+                className="rounded-full cursor-pointer"
               />
             )}
             <h2>{msg.content}</h2>
@@ -101,23 +103,35 @@ function ChatView() {
           </div>
         )}
       </div>
-      <div className="p-5 border rounded-xl max-w-2xl w-full mt-3">
-        <div className="flex gap-2">
-          <textarea
-            value={input}
-            className="outline-none bg-transperant w-full h-32 max-h-56 resize-none"
-            onChange={(event) => setUserInput(event.target.value)}
-            placeholder={Lookup.INPUT_PLACEHOLDER}
+      <div className="flex gap-2 items-end">
+        {userDetail && (
+          <Image
+            src={userDetail?.picture}
+            alt="userImage"
+            width={30}
+            height={30}
+            className="rounded-full"
+            onClick={toggleSidebar}
           />
-          {input && (
-            <ArrowRight
-              onClick={() => onGenerate(input)}
-              className="bg-gray-500 p-2 h-8 w-8 rounded-md cursor-pointer "
+        )}
+        <div className="p-5 border rounded-xl max-w-2xl w-full mt-3">
+          <div className="flex gap-2">
+            <textarea
+              value={input}
+              className="outline-none bg-transperant w-full h-32 max-h-56 resize-none"
+              onChange={(event) => setUserInput(event.target.value)}
+              placeholder={Lookup.INPUT_PLACEHOLDER}
             />
-          )}
-        </div>
-        <div>
-          <Link className="h-5 w-5" />
+            {input && (
+              <ArrowRight
+                onClick={() => onGenerate(input)}
+                className="bg-gray-500 p-2 h-8 w-8 rounded-md cursor-pointer "
+              />
+            )}
+          </div>
+          <div>
+            <Link className="h-5 w-5" />
+          </div>
         </div>
       </div>
     </div>
