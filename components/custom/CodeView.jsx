@@ -14,7 +14,7 @@ import Prompt from "../../data/Prompt";
 import { useParams } from "next/navigation";
 import { useConvex, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-
+import { Button } from "../ui/button";
 function CodeView() {
   const { id } = useParams(); // workspaceId
   const convex = useConvex();
@@ -126,32 +126,26 @@ function CodeView() {
   return (
     <div>
       <div className="bg-[#181818] w-full p-2 border">
-        <div className="flex justify-center items-center flex-wrap shrink-0 bg-black p-1 w-[140px] gap-3  rounded-full">
-          <h2
-            onClick={() => setActiveTab("code")}
-            className={`text-sm cursor-pointer ${activeTab === "code" && "text-blue-500 bg-gray-800 p-1 px-2 rounded-full"}`}
-          >
-            Code
-          </h2>
-          <h2
-            onClick={() => setActiveTab("preview")}
-            className={`text-sm cursor-pointer  ${activeTab === "preview" && "text-blue-500 bg-gray-800 p-1 px-2 rounded-full"}`}
-          >
-            Preview
-          </h2>
+        <div className="flex justify-between">
+          <div className="flex gap-3 items-center">
+            <h2
+              onClick={() => setActiveTab("code")}
+              className={`text-sm cursor-pointer ${activeTab === "code" && "text-blue-500 bg-gray-800 p-1 px-2 rounded-full"}`}
+            >
+              Code
+            </h2>
+            <h2
+              onClick={() => setActiveTab("preview")}
+              className={`text-sm cursor-pointer  ${activeTab === "preview" && "text-blue-500 bg-gray-800 p-1 px-2 rounded-full"}`}
+            >
+              Preview
+            </h2>
+          </div>
+          <div className="flex justify-end space-x-5">
+            <Button onClick={handleDeploy}>Deploy</Button>
+            <Button onClick={handleExport}>Export</Button>
+          </div>
         </div>
-        <button
-          onClick={handleDeploy}
-          className="bg-blue-500 text-white p-2 rounded"
-        >
-          Deploy
-        </button>
-        <button
-          onClick={handleExport}
-          className="bg-green-500 text-white p-2 rounded"
-        >
-          Export
-        </button>
       </div>
 
       <SandpackProvider
@@ -173,13 +167,13 @@ function CodeView() {
         <SandpackLayout>
           {activeTab == "code" ? (
             <>
-              <SandpackFileExplorer style={{ height: "80vh" }} />
-              <SandpackCodeEditor style={{ height: "80vh" }} />
+              <SandpackFileExplorer style={{ height: "72vh" }} />
+              <SandpackCodeEditor style={{ height: "72vh" }} />
             </>
           ) : (
             <>
               <SandpackPreview
-                style={{ height: "80vh" }}
+                style={{ height: "72vh" }}
                 showNavigator={true}
               />{" "}
             </>

@@ -18,8 +18,8 @@ function Header() {
             <Image
               src={userDetail.picture}
               alt="user"
-              width={32}
-              height={32}
+              width={40}
+              height={40}
               className="rounded-full"
             />
           </div>
