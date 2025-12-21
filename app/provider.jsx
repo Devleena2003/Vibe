@@ -1,43 +1,53 @@
-"use client"
-import React, { useEffect, useState } from 'react'
-import { ThemeProvider as NextThemeProvider } from 'next-themes'
-import Header from '@/components/custom/Header'
-import { UserDetailContext } from '@/context/UserDetailContext'
-import {MessageContext} from '@/context/MessageContext'
-import { GoogleOAuthProvider } from '@react-oauth/google'
-import { useConvex } from 'convex/react'
-import { api } from '@/convex/_generated/api'
+"use client";
+import React, { useEffect, useState } from "react";
+import { ThemeProvider as NextThemeProvider } from "next-themes";
+import Header from "@/components/custom/Header";
+import { UserDetailContext } from "@/context/UserDetailContext";
+import { MessageContext } from "@/context/MessageContext";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { useConvex } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import AppSideBar from "@/components/custom/AppSideBar";
 function Provider({ children }) {
-    const [messages, setMessages] = useState()
-    const [userDetail, setUserDetail] = useState()
-    const convex = useConvex();
+  const [messages, setMessages] = useState();
+  const [userDetail, setUserDetail] = useState();
+  const convex = useConvex();
 
-    useEffect(() => {
-      IsAutheticated()  
-    },[])
-    const IsAutheticated =  async() => {
-        if(typeof window !== undefined){
-            const user=JSON.parse(localStorage.getItem('user'))
-            const result = await convex.query(api.users.GetUser, { email: user?.email })
-            console.log(result)
-            setUserDetail(result)
-        }
+  useEffect(() => {
+    IsAutheticated();
+  }, []);
+  const IsAutheticated = async () => {
+    if (typeof window !== undefined) {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const result = await convex.query(api.users.GetUser, {
+        email: user?.email,
+      });
+      console.log(result);
+      setUserDetail(result);
     }
-    return (
-       
-        <div>
-          
-<GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
-            <UserDetailContext.Provider value={{userDetail,setUserDetail}}>
-            <MessageContext.Provider value={{messages,setMessages}}>
-            <NextThemeProvider attribute="class"
-            defaultTheme="dark"
-            enableSystem
-                    disableTransitionOnChange><Header />{children}</NextThemeProvider>
-                </MessageContext.Provider>
-            </UserDetailContext.Provider>   
-            </GoogleOAuthProvider>
-        </div>
-    )
+  };
+  return (
+    <div>
+      <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+        <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
+          <MessageContext.Provider value={{ messages, setMessages }}>
+            <NextThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <Header />
+              <SidebarProvider defaultOpen={false}>
+                <AppSideBar />
+                {children}
+              </SidebarProvider>
+            </NextThemeProvider>
+          </MessageContext.Provider>
+        </UserDetailContext.Provider>
+      </GoogleOAuthProvider>
+    </div>
+  );
 }
-export default Provider
+export default Provider;

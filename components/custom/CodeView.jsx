@@ -11,10 +11,32 @@ import Lookup from "@/data/Lookup";
 import { MessageContext } from "@/context/MessageContext";
 import axios from "axios";
 import Prompt from "../../data/Prompt";
+import { useParams } from "next/navigation";
+import { useConvex, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Button } from "../ui/button";
 function CodeView() {
+  const { id } = useParams(); // workspaceId
+  const convex = useConvex();
+
   const [activeTab, setActiveTab] = useState("code");
   const [files, setFiles] = useState(Lookup?.DEFAULT_FILE);
   const { messages, setMessages } = useContext(MessageContext);
+  const [dependencies, setDependencies] = useState({});
+  const updateFiles = useMutation(api.workspace.UpdateFiles);
+  useEffect(() => {
+    id && GetWorkspaceFiles();
+  }, [id]);
+
+  const GetWorkspaceFiles = async () => {
+    const result = await convex.query(api.workspace.GetWorkspace, {
+      workspaceId: id,
+    });
+
+    if (result?.fileData) {
+      setFiles(result.fileData);
+    }
+  };
 
   useEffect(() => {
     if (messages?.length > 0) {
@@ -32,27 +54,100 @@ function CodeView() {
     });
     console.log(result.data);
     const aiResp = result.data;
+
     const mergedFiles = { ...Lookup.DEFAULT_FILE, ...aiResp?.files };
+
     setFiles(mergedFiles);
+    await updateFiles({
+      workspaceId: id, // you must already have this
+      files: mergedFiles,
+    });
+
+    if (aiResp.dependencies) {
+      setDependencies(aiResp.dependencies);
+    }
   };
+  const [deploying, setDeploying] = useState(false);
+
+  const handleDeploy = async () => {
+    if (deploying) return;
+
+    try {
+      setDeploying(true);
+
+      const res = await axios.post("/api/deploy", {
+        files,
+        repoName: `ai-project-${Date.now()}`,
+      });
+
+      alert("🚀 Deployed successfully!");
+      console.log(res.data);
+      const { liveUrl } = res.data;
+
+      if (liveUrl) {
+        // 🚀 Redirect to live site
+        window.open(liveUrl, "_blank");
+      } else {
+        alert("Deployment succeeded but no live URL returned.");
+      }
+    } catch (err) {
+      console.error(err?.response?.data || err.message);
+      alert("Deployment failed");
+    } finally {
+      setDeploying(false);
+    }
+  };
+  const handleExport = async () => {
+    try {
+      const response = await axios.post(
+        "/api/export",
+        { files },
+        { responseType: "blob" }
+      );
+
+      const blob = new Blob([response.data], {
+        type: "application/zip",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "project.zip";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Failed to export project");
+    }
+  };
+
   return (
     <div>
       <div className="bg-[#181818] w-full p-2 border">
-        <div className="flex justify-center items-center flex-wrap shrink-0 bg-black p-1 w-[140px] gap-3  rounded-full">
-          <h2
-            onClick={() => setActiveTab("code")}
-            className={`text-sm cursor-pointer ${activeTab === "code" && "text-blue-500 bg-gray-800 p-1 px-2 rounded-full"}`}
-          >
-            Code
-          </h2>
-          <h2
-            onClick={() => setActiveTab("preview")}
-            className={`text-sm cursor-pointer  ${activeTab === "preview" && "text-blue-500 bg-gray-800 p-1 px-2 rounded-full"}`}
-          >
-            Preview
-          </h2>
+        <div className="flex justify-between">
+          <div className="flex gap-3 items-center">
+            <h2
+              onClick={() => setActiveTab("code")}
+              className={`text-sm cursor-pointer ${activeTab === "code" && "text-blue-500 bg-gray-800 p-1 px-2 rounded-full"}`}
+            >
+              Code
+            </h2>
+            <h2
+              onClick={() => setActiveTab("preview")}
+              className={`text-sm cursor-pointer  ${activeTab === "preview" && "text-blue-500 bg-gray-800 p-1 px-2 rounded-full"}`}
+            >
+              Preview
+            </h2>
+          </div>
+          <div className="flex justify-end space-x-5">
+            <Button onClick={handleDeploy}>Deploy</Button>
+            <Button onClick={handleExport}>Export</Button>
+          </div>
         </div>
       </div>
+
       <SandpackProvider
         files={files}
         template="react"
@@ -60,6 +155,7 @@ function CodeView() {
         customSetup={{
           dependencies: {
             ...Lookup.DEPENDENCY,
+            ...dependencies,
           },
         }}
         options={{
@@ -71,13 +167,13 @@ function CodeView() {
         <SandpackLayout>
           {activeTab == "code" ? (
             <>
-              <SandpackFileExplorer style={{ height: "80vh" }} />
-              <SandpackCodeEditor style={{ height: "80vh" }} />
+              <SandpackFileExplorer style={{ height: "72vh" }} />
+              <SandpackCodeEditor style={{ height: "72vh" }} />
             </>
           ) : (
             <>
               <SandpackPreview
-                style={{ height: "80vh" }}
+                style={{ height: "72vh" }}
                 showNavigator={true}
               />{" "}
             </>
